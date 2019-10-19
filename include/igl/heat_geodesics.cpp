@@ -27,8 +27,10 @@ IGL_INLINE bool igl::heat_geodesics_precompute(
   HeatGeodesicsData<Scalar> & data)
 {
   // default t value
+
   const Scalar h = avg_edge_length(V,F);
-  const Scalar t = h*h;
+  const Scalar t = h*h/2.0;
+  std::cout << t << std::endl;
   return heat_geodesics_precompute(V,F,t,data);
 }
 
@@ -122,30 +124,32 @@ IGL_INLINE void igl::heat_geodesics_solve(
     u += uD;
     u *= 0.5;
   }
-  DerivedD grad_u = data.Grad*u;
-  const int m = data.Grad.rows()/data.ng;
-  for(int i = 0;i<m;i++)
-  {
-    Scalar norm = 0;
-    for(int d = 0;d<data.ng;d++)
-    {
-      norm += grad_u(d*m+i)*grad_u(d*m+i);
-    }
-    norm = sqrt(norm);
-    if(norm == 0)
-    {
-      for(int d = 0;d<data.ng;d++) { grad_u(d*m+i) = 0; }
-    }else
-    {
-      for(int d = 0;d<data.ng;d++) { grad_u(d*m+i) /= norm; }
-    }
-  }
-  const DerivedD div_X = -data.Div*grad_u;
-  const DerivedD Beq = (DerivedD(1,1)<<0).finished();
-  igl::min_quad_with_fixed_solve(data.Poisson,(-2.0*div_X).eval(),DerivedD(),Beq,D);
+  //DerivedD grad_u = data.Grad*u;
+  D = u;
+//  const int m = data.Grad.rows()/data.ng;
+//  for(int i = 0;i<m;i++)
+//  {
+//    Scalar norm = 0;
+//    for(int d = 0;d<data.ng;d++)
+//    {
+//      norm += grad_u(d*m+i)*grad_u(d*m+i);
+//    }
+//    norm = sqrt(norm);
+//    if(norm == 0)
+//    {
+//      for(int d = 0;d<data.ng;d++) { grad_u(d*m+i) = 0; }
+//    }else
+//    {
+//      for(int d = 0;d<data.ng;d++) { grad_u(d*m+i) /= norm; }
+//    }
+//  }
+//  const DerivedD div_X = -data.Div*grad_u;
+//  const DerivedD Beq = (DerivedD(1,1)<<0).finished();
+//  igl::min_quad_with_fixed_solve(data.Poisson,(-2.0*div_X).eval(),DerivedD(),Beq,D);
   DerivedD Dgamma;
   igl::slice(D,gamma,Dgamma);
-  D.array() -= Dgamma.mean();
+  std::cout<<Dgamma.mean();
+  D.array() /= Dgamma.mean();
   if(D.mean() < 0)
   {
     D = -D;
